@@ -1,0 +1,36 @@
+# Environment and secrets
+.venv/
+venv/
+env/
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+*.egg-info/
+.eggs/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Project data (optional: commit structure, ignore raw HTML/output if large)
+# data/raw/
+# data/output/
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/output/reports/.gitkeep
+!data/output/screenshots/.gitkeep

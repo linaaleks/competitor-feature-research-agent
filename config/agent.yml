@@ -1,0 +1,14 @@
+# Agent configuration: LLM, API keys (override via .env)
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.2
+  max_tokens: 4096
+
+# Paths
+paths:
+  prompts_dir: prompts
+  data_raw: data/raw
+  data_output: data/output
+  reports_dir: data/output/reports
+  screenshots_dir: data/output/screenshots
