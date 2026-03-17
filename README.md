@@ -11,15 +11,16 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/competitor-feature-research-agent.git
+git clone https://github.com/linaaleks/competitor-feature-research-agent.git
 cd competitor-feature-research-agent
+cd "parser fich"
 ```
 
-(Замените `YOUR_USERNAME` на ваш логин GitHub или полный URL вашего репо.)
+Проект лежит в папке `parser fich` — все следующие команды выполняйте из неё.
 
 ### 2. Открыть проект в Cursor
 
-- **File → Open Folder** → выберите папку `competitor-feature-research-agent`
+- **File → Open Folder** → выберите папку `parser fich` (внутри склонированного репо)
 - Или в терминале Cursor: `cursor .` из корня проекта
 
 ### 3. Установить зависимости и настроить окружение
