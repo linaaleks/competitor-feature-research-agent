@@ -1,16 +1,14 @@
 # Competitor Feature Research Agent
 
-ИИ‑агент для глубокого конкурентного анализа фич: поиск конкурентов по теме, сбор страниц, извлечение фич, описание механики, скриншоты, отчёт в Markdown.
+ИИ‑агент для конкурентного анализа: поиск конкурентов по теме, сбор страниц, извлечение фич, описание механики, отчёт в Markdown.
 
-**Запускается где угодно:** в обычном терминале (macOS, Linux, Windows), в VS Code, PyCharm, Cursor, GitHub Codespaces и т.д. — нужны только Python 3.9+ и зависимости из `requirements.txt`. Cursor не обязателен.
+Работает в любом окружении: терминал (macOS, Linux, Windows), VS Code, Cursor, PyCharm и т.д. Нужны только **Python 3.9+** и **один бесплатный API-ключ** (OpenRouter по умолчанию).
 
 ---
 
-## Как скопировать и запустить
+## Запуск с нуля (3 шага)
 
-Любой пользователь может склонировать репозиторий и запустить агента локально (в Cursor, VS Code или в терминале).
-
-### 1. Клонировать репозиторий
+### 1. Клонировать и зайти в проект
 
 ```bash
 git clone https://github.com/linaaleks/competitor-feature-research-agent.git
@@ -18,132 +16,138 @@ cd competitor-feature-research-agent
 cd "parser fich"
 ```
 
-Проект лежит в папке `parser fich` — все следующие команды выполняйте из неё.
+Все следующие команды — из папки `parser fich`.
 
-### 2. Открыть проект (по желанию)
+### 2. Окружение и ключ нейросети (подробно)
 
-- В **Cursor** или **VS Code**: File → Open Folder → папка `parser fich`
-- Или просто работайте в терминале из этой папки
+Делай всё по порядку в терминале (из папки `parser fich`).
 
-### 3. Установить зависимости и настроить окружение
+**2.1. Создать виртуальное окружение**
 
+Введи и нажми Enter:
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+```
+Потом включи его:
+- **Mac/Linux:** `source .venv/bin/activate`
+- **Windows:** `.venv\Scripts\activate`
+
+После этого в начале строки появится `(.venv)` — окружение включено.
+
+**2.2. Поставить зависимости**
+
+```bash
 pip install -r requirements.txt
+```
+Дождись окончания.
+
+**2.3. Создать файл с настройками**
+
+Если `.env.example` лежит **в этой же папке** (`parser fich`):
+```bash
 cp .env.example .env
 ```
-
-В файле `.env` укажите API-ключ в зависимости от выбранного провайдера (см. ниже **Бесплатные нейросети**).
-
-### 4. Запустить research
-
-Из корня проекта (с активированным `.venv`):
-
+Если `.env.example` в **корне репо** (на уровень выше):
 ```bash
-python -m src.cli "EdTech blue-collar training platforms"
+cp ../.env.example .env
 ```
 
-С ограничением числа конкурентов и вызовов LLM (для теста):
+Файл `.env` появится в папке `parser fich`. Открой его в редакторе.
+
+**2.4. Получить бесплатный ключ OpenRouter**
+
+1. Открой в браузере: **https://openrouter.ai/keys**
+2. Зарегистрируйся при необходимости.
+3. Нажми **Create Key**, придумай имя, скопируй ключ (начинается с `sk-or-v1-...`). Сохрани — потом не покажут.
+
+**2.5. Вписать ключ в проект**
+
+В файле `.env` найди строку `OPENROUTER_API_KEY=sk-or-v1-...` и замени `sk-or-v1-...` на свой ключ. Без кавычек, без пробелов вокруг `=`. Сохрани файл.
+
+**2.6. Конфиг**
+
+В `config/agent.yml` по умолчанию уже стоит `provider: openrouter` и `model: openrouter/free`. Менять не нужно — переходи к шагу 3.
+
+### 3. Запустить research
 
 ```bash
-python -m src.cli "EdTech blue-collar training" --max-competitors 1 --mechanics-limit 1
+python -m src.cli "Тема для анализа" --max-competitors 1 --mechanics-limit 1
+```
+
+Если команда ругается на аргументы — попробуй с темой в конце:
+```bash
+python -m src.cli --max-competitors 1 --mechanics-limit 1 "Тема для анализа"
+```
+
+Пример:
+```bash
+python -m src.cli "EdTech blue-collar training platforms" --max-competitors 1 --mechanics-limit 1
 ```
 
 Результаты:
 - `data/output/features.json` — карточки фич
 - `data/output/mechanics.json` — описания механики
 - `data/output/reports/research_*.md` — отчёт в Markdown
-- `data/raw/` — сохранённый HTML страниц
+
+Опции: `--max-competitors N`, `--mechanics-limit N`, `-v` / `--verbose`.
 
 ---
 
-## Бесплатные нейросети (DeepSeek и др.)
+## Какую нейросеть использовать
 
-Агент умеет работать не только с OpenAI, но и с **DeepSeek** (бесплатный/дешёвый API) и любым **OpenAI-совместимым** API.
+По умолчанию — **OpenRouter** (бесплатные модели, без пополнения).
 
-### DeepSeek
+| Провайдер    | Условия | Настройка |
+|-------------|---------|-----------|
+| **OpenRouter** | Бесплатно | В `.env`: `OPENROUTER_API_KEY=sk-or-v1-...`. В конфиге уже по умолчанию. |
+| **Groq**       | Бесплатный тариф | В `.env`: `GROQ_API_KEY=gsk_...`. В `config/agent.yml`: `provider: groq`, `model: llama-3.1-70b-versatile`. |
+| **DeepSeek**   | Нужен баланс | В `.env`: `DEEPSEEK_API_KEY=...`. В конфиге: `provider: deepseek`, `model: deepseek-chat`. |
+| **OpenAI**     | Подписка/кредиты | В `.env`: `OPENAI_API_KEY=sk-...`. В конфиге: `provider: openai`, `model: gpt-4o-mini`. |
 
-1. Получи ключ: https://platform.deepseek.com/
-2. В `config/agent.yml` задай:
-   ```yaml
-   llm:
-     provider: deepseek
-     model: deepseek-chat
-   ```
-3. В `.env` добавь:
-   ```
-   DEEPSEEK_API_KEY=sk-твой-ключ
-   ```
-
-После этого запуск как обычно — агент будет вызывать DeepSeek вместо OpenAI.
-
-### Другой OpenAI-совместимый API
-
-В `config/agent.yml`:
-```yaml
-llm:
-  provider: openai_compatible
-  base_url: https://api.example.com/v1
-  model: model-name
-```
-В `.env`: `LLM_API_KEY=твой-ключ` (и при необходимости `LLM_BASE_URL`, `LLM_MODEL`).
-
-### Переключение обратно на OpenAI
-
-В `config/agent.yml` поставь `provider: openai` и в `.env` задай `OPENAI_API_KEY=sk-...`.
+Подробнее: `config/agent.yml` и `.env.example`.
 
 ---
-
-## Запуск (кратко)
-
-```bash
-pip install -r requirements.txt
-cp .env.example .env   # задать DEEPSEEK_API_KEY или OPENAI_API_KEY
-
-python -m src.cli "EdTech blue-collar training platforms"
-```
-
-Опции:
-- `--verbose` / `-v` — подробные логи
-- `--max-competitors N` — макс. число конкурентов (по умолчанию 2)
-- `--mechanics-limit N` — макс. число фич для describe_mechanics (по умолчанию 3)
 
 ## Структура проекта
 
 ```
-src/
-  cli.py                 # команда research
-  llm/client.py          # load_prompt, call_llm (конфиг: config/agent.yml + .env)
-  collectors/            # web_collector, screenshotter
-  extractors/            # competitor_finder, feature_extractor
-  models/                # FeatureCard, MechanicsDescription, Competitor, ResearchReport
-  analyzer/              # mechanics_describer, feature_gaps, market_insights
-  reporters/             # markdown_reporter, assets
-prompts/                 # промпты для LLM (.md)
-data/raw/                # HTML-снимки
-data/output/             # reports/, screenshots/, features.json, mechanics.json
-config/agent.yml         # модель, пути, провайдер LLM
+parser fich/
+  src/
+    cli.py              # точка входа: python -m src.cli "тема"
+    llm/client.py       # вызов LLM (config/agent.yml + .env)
+    collectors/         # сбор страниц
+    extractors/         # поиск конкурентов, извлечение фич
+    models/             # FeatureCard, MechanicsDescription, Competitor, Report
+    analyzer/           # описание механики
+    reporters/          # Markdown-отчёт
+  prompts/              # шаблоны промптов (.md)
+  config/agent.yml      # провайдер, модель, пути
+  data/raw/             # сохранённый HTML
+  data/output/          # features.json, mechanics.json, reports/
 ```
 
-## How prompts are used
+---
 
-Промпты лежат в `prompts/*.md` и подставляются в вызовы LLM через `src.llm.load_prompt` и `call_llm`.
+## Что реализовано
 
-| Файл промпта | Назначение | Выход (Pydantic) |
-|--------------|------------|-------------------|
-| **extract_features.md** | Извлечение фич из текста страницы (features, pricing, changelog, docs). Переменные: `{text}`, `{url}`, `{screenshot_paths}`. | Список **FeatureCard** |
-| **describe_mechanics.md** | Детальное описание механики одной фичи: шаги, сущности, настройки, UI. Переменные: `{feature_card_json}`, `{extra_context}`, `{screenshot_paths}`. | **MechanicsDescription** |
+Поиск конкурентов (stub), сбор страниц, извлечение фич, описание механики, JSON и Markdown-отчёт. Заглушки: screenshotter, feature_gaps, market_insights.
 
-## Что реализовано / заглушки
-
-- **Реализовано:** структура проекта, Pydantic-модели, CLI `research`, загрузка промптов и вызов LLM, извлечение фич по `extract_features.md`, описание механики по `describe_mechanics.md`, сохранение `features.json` и `mechanics.json`, генерация Markdown-отчёта, сбор страниц (web_collector).
-- **Заглушки:** competitor_finder (2 фиксированных конкурента), screenshotter (без реальных скриншотов), feature_gaps, market_insights.
+---
 
 ## Требования
 
 - Python 3.9+ (рекомендуется 3.11)
-- API-ключ одного из провайдеров: OpenAI или DeepSeek (в `.env`)
+- Один API-ключ: OpenRouter (рекомендуется), Groq, DeepSeek или OpenAI.
+
+---
+
+## Если при push в Git ошибка 403
+
+- **GitHub CLI:** `brew install gh` → `gh auth login` → вход через браузер. Дальше `git push origin main` без токена.
+- **SSH:** ключ на https://github.com/settings/keys → `git remote set-url origin git@github.com:linaaleks/competitor-feature-research-agent.git` → `git push origin main`.
+- **HTTPS + токен:** Personal Access Token (scope `repo`) на https://github.com/settings/tokens → при запросе пароля вставлять токен.
+
+---
 
 ## Лицензия
 
