@@ -2,11 +2,13 @@
 
 ИИ‑агент для глубокого конкурентного анализа фич: поиск конкурентов по теме, сбор страниц, извлечение фич, описание механики, скриншоты, отчёт в Markdown.
 
+**Запускается где угодно:** в обычном терминале (macOS, Linux, Windows), в VS Code, PyCharm, Cursor, GitHub Codespaces и т.д. — нужны только Python 3.9+ и зависимости из `requirements.txt`. Cursor не обязателен.
+
 ---
 
-## Как скопировать и запустить в Cursor
+## Как скопировать и запустить
 
-Любой пользователь может склонировать репозиторий и запустить агента локально в Cursor.
+Любой пользователь может склонировать репозиторий и запустить агента локально (в Cursor, VS Code или в терминале).
 
 ### 1. Клонировать репозиторий
 
@@ -18,10 +20,10 @@ cd "parser fich"
 
 Проект лежит в папке `parser fich` — все следующие команды выполняйте из неё.
 
-### 2. Открыть проект в Cursor
+### 2. Открыть проект (по желанию)
 
-- **File → Open Folder** → выберите папку `parser fich` (внутри склонированного репо)
-- Или в терминале Cursor: `cursor .` из корня проекта
+- В **Cursor** или **VS Code**: File → Open Folder → папка `parser fich`
+- Или просто работайте в терминале из этой папки
 
 ### 3. Установить зависимости и настроить окружение
 
@@ -32,24 +34,20 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-В файле `.env` укажите ваш **OPENAI_API_KEY** (обязательно для извлечения фич и описания механики):
-
-```
-OPENAI_API_KEY=sk-...
-```
+В файле `.env` укажите API-ключ в зависимости от выбранного провайдера (см. ниже **Бесплатные нейросети**).
 
 ### 4. Запустить research
 
 Из корня проекта (с активированным `.venv`):
 
 ```bash
-python -m src.cli research "EdTech blue-collar training platforms"
+python -m src.cli "EdTech blue-collar training platforms"
 ```
 
 С ограничением числа конкурентов и вызовов LLM (для теста):
 
 ```bash
-python -m src.cli research "EdTech blue-collar training" --max-competitors 1 --mechanics-limit 1
+python -m src.cli "EdTech blue-collar training" --max-competitors 1 --mechanics-limit 1
 ```
 
 Результаты:
@@ -60,13 +58,50 @@ python -m src.cli research "EdTech blue-collar training" --max-competitors 1 --m
 
 ---
 
+## Бесплатные нейросети (DeepSeek и др.)
+
+Агент умеет работать не только с OpenAI, но и с **DeepSeek** (бесплатный/дешёвый API) и любым **OpenAI-совместимым** API.
+
+### DeepSeek
+
+1. Получи ключ: https://platform.deepseek.com/
+2. В `config/agent.yml` задай:
+   ```yaml
+   llm:
+     provider: deepseek
+     model: deepseek-chat
+   ```
+3. В `.env` добавь:
+   ```
+   DEEPSEEK_API_KEY=sk-твой-ключ
+   ```
+
+После этого запуск как обычно — агент будет вызывать DeepSeek вместо OpenAI.
+
+### Другой OpenAI-совместимый API
+
+В `config/agent.yml`:
+```yaml
+llm:
+  provider: openai_compatible
+  base_url: https://api.example.com/v1
+  model: model-name
+```
+В `.env`: `LLM_API_KEY=твой-ключ` (и при необходимости `LLM_BASE_URL`, `LLM_MODEL`).
+
+### Переключение обратно на OpenAI
+
+В `config/agent.yml` поставь `provider: openai` и в `.env` задай `OPENAI_API_KEY=sk-...`.
+
+---
+
 ## Запуск (кратко)
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env   # задать OPENAI_API_KEY
+cp .env.example .env   # задать DEEPSEEK_API_KEY или OPENAI_API_KEY
 
-python -m src.cli research "EdTech blue-collar training platforms"
+python -m src.cli "EdTech blue-collar training platforms"
 ```
 
 Опции:
@@ -108,7 +143,7 @@ config/agent.yml         # модель, пути, провайдер LLM
 ## Требования
 
 - Python 3.9+ (рекомендуется 3.11)
-- OpenAI API key (в `.env`)
+- API-ключ одного из провайдеров: OpenAI или DeepSeek (в `.env`)
 
 ## Лицензия
 

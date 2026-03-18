@@ -1,6 +1,7 @@
 """
 CLI for competitor feature research agent.
-Main command: python -m src.cli research "TOPIC STRING"
+Main command: python -m src.cli "TOPIC STRING"
+Example: python -m src.cli "EdTech blue-collar training platforms"
 """
 from __future__ import annotations
 
@@ -31,17 +32,13 @@ def _setup_logging(verbose: bool) -> None:
     logging.basicConfig(level=level, format="%(levelname)s %(name)s: %(message)s")
 
 
-@app.command()
-def research(
-    topic: str = typer.Argument(..., help="Research topic, e.g. 'EdTech blue-collar training platforms'"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose logging"),
-    max_competitors: int = typer.Option(2, "--max-competitors", help="Max competitors to process (stub often uses 2)"),
-    describe_mechanics_limit: int = typer.Option(3, "--mechanics-limit", help="Max features to run describe_mechanics on"),
+def _run_research(
+    topic: str,
+    verbose: bool,
+    max_competitors: int,
+    describe_mechanics_limit: int,
 ) -> None:
-    """
-    Run full research pipeline: find competitors → collect pages → extract features →
-    describe mechanics (for key features) → save features.json, mechanics.json → generate Markdown report.
-    """
+    """Run full research pipeline."""
     _setup_logging(verbose)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
@@ -121,6 +118,19 @@ def research(
     report_path.write_text(report_md, encoding="utf-8")
     typer.echo(f"Report written -> {report_path}")
     typer.echo("Done.")
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    topic: str = typer.Argument(..., help="Research topic, e.g. 'EdTech blue-collar training platforms'"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose logging"),
+    max_competitors: int = typer.Option(2, "--max-competitors", help="Max competitors to process"),
+    describe_mechanics_limit: int = typer.Option(3, "--mechanics-limit", help="Max features for describe_mechanics"),
+) -> None:
+    """Run competitive feature research: find competitors, extract features, describe mechanics, generate report."""
+    if ctx.invoked_subcommand is None:
+        _run_research(topic, verbose, max_competitors, describe_mechanics_limit)
 
 
 if __name__ == "__main__":
