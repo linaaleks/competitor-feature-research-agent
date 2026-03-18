@@ -1,0 +1,10 @@
+# Template / our feature matrix for gap analysis (optional)
+# competitors:
+#   - name: Example
+#     url: https://example.com
+#     focus: ...
+# our_features:
+#   - name: Feature A
+#     category: workflow
+#   - name: Feature B
+#     category: analytics
