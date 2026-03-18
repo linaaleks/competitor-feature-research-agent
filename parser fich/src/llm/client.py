@@ -1,6 +1,8 @@
 """
 Centralized LLM client: loads prompts from prompts/ and calls the configured model.
-Configuration: config/agent.yml + .env (OPENAI_API_KEY, optional LLM_MODEL, LLM_TEMPERATURE).
+Configuration: config/agent.yml + .env (API keys and optional overrides).
+
+Supported providers: openai, deepseek, openai_compatible (any OpenAI-compatible API).
 """
 from __future__ import annotations
 
@@ -19,6 +21,12 @@ logger = logging.getLogger(__name__)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _CONFIG_PATH = _PROJECT_ROOT / "config" / "agent.yml"
 _DEFAULT_PROMPTS_DIR = _PROJECT_ROOT / "prompts"
+
+# Provider defaults (OpenAI-compatible endpoints)
+PROVIDER_BASE_URLS = {
+    "openai": "https://api.openai.com/v1",
+    "deepseek": "https://api.deepseek.com",
+}
 
 
 def _load_config() -> dict:
@@ -56,6 +64,36 @@ def _substitute_vars(template: str, input_vars: dict) -> str:
     return result
 
 
+def _get_llm_params(config: dict) -> tuple[str, str, str, float, int]:
+    """Returns (api_key, base_url, model, temperature, max_tokens)."""
+    llm_cfg = config.get("llm", {})
+    provider = (os.getenv("LLM_PROVIDER") or llm_cfg.get("provider", "openai")).lower()
+    model = os.getenv("LLM_MODEL") or llm_cfg.get("model", "gpt-4o-mini")
+    temperature = float(os.getenv("LLM_TEMPERATURE", llm_cfg.get("temperature", 0.2)))
+    max_tokens = int(os.getenv("LLM_MAX_TOKENS", llm_cfg.get("max_tokens", 4096)))
+
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("LLM_BASE_URL") or PROVIDER_BASE_URLS["openai"]
+    elif provider == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        base_url = os.getenv("LLM_BASE_URL") or PROVIDER_BASE_URLS["deepseek"]
+        if not model or model.startswith("gpt-"):
+            model = llm_cfg.get("model") or "deepseek-chat"
+    elif provider == "openai_compatible":
+        api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("LLM_BASE_URL") or llm_cfg.get("base_url", "")
+        model = os.getenv("LLM_MODEL") or llm_cfg.get("model", "gpt-4o-mini")
+        if not base_url:
+            raise ValueError("For provider openai_compatible set LLM_BASE_URL in .env or base_url in config")
+    else:
+        raise ValueError(f"Unsupported LLM provider: {provider}. Use openai, deepseek, or openai_compatible.")
+
+    if not api_key:
+        logger.warning("API key not set for provider %s; LLM call may fail", provider)
+    return api_key or "", base_url, model, temperature, max_tokens
+
+
 def call_llm(prompt: str, input_vars: dict | None = None) -> str:
     """
     Substitute input_vars into prompt (e.g. {text}, {url}) and call the configured LLM.
@@ -65,29 +103,18 @@ def call_llm(prompt: str, input_vars: dict | None = None) -> str:
         prompt = _substitute_vars(prompt, input_vars)
 
     config = _load_config()
-    llm_cfg = config.get("llm", {})
-    provider = llm_cfg.get("provider", "openai")
-    model = os.getenv("LLM_MODEL") or llm_cfg.get("model", "gpt-4o-mini")
-    temperature = float(os.getenv("LLM_TEMPERATURE", llm_cfg.get("temperature", 0.2)))
-    max_tokens = llm_cfg.get("max_tokens", 4096)
+    api_key, base_url, model, temperature, max_tokens = _get_llm_params(config)
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key and provider == "openai":
-        logger.warning("OPENAI_API_KEY not set; LLM call may fail")
-
-    if provider == "openai":
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=api_key)
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            return (response.choices[0].message.content or "").strip()
-        except Exception as e:
-            logger.exception("OpenAI API call failed: %s", e)
-            raise
-
-    raise ValueError(f"Unsupported LLM provider: {provider}")
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return (response.choices[0].message.content or "").strip()
+    except Exception as e:
+        logger.exception("LLM API call failed: %s", e)
+        raise
