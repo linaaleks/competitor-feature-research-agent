@@ -1,9 +1,12 @@
 # Agent configuration: LLM, API keys (override via .env)
+# provider: openai | deepseek | openai_compatible
+# Для бесплатного/дешёвого API (DeepSeek): provider: deepseek, в .env задать DEEPSEEK_API_KEY
 llm:
-  provider: openai
-  model: gpt-4o-mini
+  provider: deepseek   # или openai
+  model: deepseek-chat  # для openai: gpt-4o-mini
   temperature: 0.2
   max_tokens: 4096
+  # для openai_compatible укажи base_url и в .env LLM_API_KEY, LLM_BASE_URL
 
 # Paths
 paths:
