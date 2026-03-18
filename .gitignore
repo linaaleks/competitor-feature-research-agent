@@ -26,6 +26,8 @@ eggs/
 *.swo
 .DS_Store
 
+.git/config
+
 # Project data (optional: commit structure, ignore raw HTML/output if large)
 # data/raw/
 # data/output/
