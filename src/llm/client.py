@@ -2,8 +2,7 @@
 Centralized LLM client: loads prompts from prompts/ and calls the configured model.
 Configuration: config/agent.yml + .env (API keys and optional overrides).
 
-Supported providers: openai, deepseek, groq, openrouter, openai_compatible.
-OpenRouter и Groq — бесплатные/щедрые тарифы, без постоянной оплаты при умеренном использовании.
+Supported providers: openai, deepseek, openai_compatible (any OpenAI-compatible API).
 """
 from __future__ import annotations
 
@@ -27,8 +26,6 @@ _DEFAULT_PROMPTS_DIR = _PROJECT_ROOT / "prompts"
 PROVIDER_BASE_URLS = {
     "openai": "https://api.openai.com/v1",
     "deepseek": "https://api.deepseek.com",
-    "groq": "https://api.groq.com/openai/v1",
-    "openrouter": "https://openrouter.ai/api/v1",
 }
 
 
@@ -83,17 +80,6 @@ def _get_llm_params(config: dict) -> tuple[str, str, str, float, int]:
         base_url = os.getenv("LLM_BASE_URL") or PROVIDER_BASE_URLS["deepseek"]
         if not model or model.startswith("gpt-"):
             model = llm_cfg.get("model") or "deepseek-chat"
-    elif provider == "groq":
-        api_key = os.getenv("GROQ_API_KEY")
-        base_url = os.getenv("LLM_BASE_URL") or PROVIDER_BASE_URLS["groq"]
-        if not model or model.startswith("gpt-") or model.startswith("deepseek"):
-            model = llm_cfg.get("model") or "llama-3.1-70b-versatile"
-    elif provider == "openrouter":
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        base_url = os.getenv("LLM_BASE_URL") or PROVIDER_BASE_URLS["openrouter"]
-        # openrouter/free — бесплатные модели без лимита по деньгам
-        if not model or model.startswith("gpt-") or model.startswith("deepseek"):
-            model = llm_cfg.get("model") or "openrouter/free"
     elif provider == "openai_compatible":
         api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
         base_url = os.getenv("LLM_BASE_URL") or llm_cfg.get("base_url", "")
@@ -101,7 +87,7 @@ def _get_llm_params(config: dict) -> tuple[str, str, str, float, int]:
         if not base_url:
             raise ValueError("For provider openai_compatible set LLM_BASE_URL in .env or base_url in config")
     else:
-        raise ValueError(f"Unsupported LLM provider: {provider}. Use openai, deepseek, groq, openrouter, or openai_compatible.")
+        raise ValueError(f"Unsupported LLM provider: {provider}. Use openai, deepseek, or openai_compatible.")
 
     if not api_key:
         logger.warning("API key not set for provider %s; LLM call may fail", provider)
