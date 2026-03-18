@@ -1,10 +1,15 @@
-# Обновить репозиторий через сайт GitHub (без git push)
+# Agent configuration: LLM, API keys (override via .env)
+# provider: openrouter (бесплатно) | groq | deepseek | openai | openai_compatible
+llm:
+  provider: openrouter   # бесплатные модели — ключ: https://openrouter.ai/keys
+  model: openrouter/free # или groq: llama-3.1-70b-versatile, deepseek: deepseek-chat
+  temperature: 0.2
+  max_tokens: 4096
 
-Если `git push` постоянно даёт 403, можно загрузить изменения через браузер.
-
-1. Открыть репозиторий: https://github.com/linaaleks/competitor-feature-research-agent  
-2. Зайти в папку **parser fich** (если структура репо: корень → parser fich → код).  
-3. **Изменить файл:** открыть нужный файл → Edit (карандаш) → вставить содержимое из локальной копии → Commit changes.  
-4. **Добавить файл:** Add file → Upload files → перетащить файлы или папку с диска → Commit changes.
-
-Так можно обновить README, конфиги и скрипты без настройки Git-авторизации. Основная инструкция по запуску — в [README](../README.md).
+# Paths
+paths:
+  prompts_dir: prompts
+  data_raw: data/raw
+  data_output: data/output
+  reports_dir: data/output/reports
+  screenshots_dir: data/output/screenshots
